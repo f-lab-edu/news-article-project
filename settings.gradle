@@ -1,0 +1,5 @@
+rootProject.name = 'news-article-project'
+include 'news-crawler'
+include 'news-mail'
+include 'news-api'
+include 'news-recommendation'
