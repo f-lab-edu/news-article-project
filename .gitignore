@@ -1,12 +1,15 @@
-.gradle
+# Gradle 관련
+.gradle/
+**/.gradle/
 
-build
+# 모든 build 폴더 무시
+build/
+**/build/
 
-*.log
-
+# (추가) IDE/OS별 무시 파일 (예시)
 .idea
-out/
 *.iml
-
-.env
-
+out/
+.DS_Store
+Thumbs.db
+*.log
