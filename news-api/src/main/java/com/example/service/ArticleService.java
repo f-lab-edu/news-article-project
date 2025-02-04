@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,9 +25,10 @@ public class ArticleService {
     public ArticleResponseDTO searchArticles(ArticleSearchRequestDTO requestDTO) {
         List<Article> all = articleRepository.findAll();
 
-        all = filterArticles(all, requestDTO.getCategory(), requestDTO.getSentiment());
+        all = filterArticles(all, requestDTO.getCategory(), requestDTO.getSentiment(), requestDTO.getJournalistId());
 
         all = sortArticles(all, requestDTO.getSortField(), requestDTO.isDescending());
+
 
         long totalElements = all.size();
         int totalPages = (int) Math.ceil((double) totalElements / requestDTO.getSize());
@@ -43,7 +45,8 @@ public class ArticleService {
     private List<Article> filterArticles(
             List<Article> list,
             ArticleCategory category,
-            ArticleSentiment sentiment
+            ArticleSentiment sentiment,
+            Long journalistId
     ) {
         if (category != null) {
             list = list.stream()
@@ -53,6 +56,11 @@ public class ArticleService {
         if (sentiment != null) {
             list = list.stream()
                     .filter(a -> a.getSentiment() == sentiment)
+                    .collect(Collectors.toList());
+        }
+        if (journalistId != null) {
+            list = list.stream()
+                    .filter(a -> Objects.equals(a.getJournalistId(), journalistId))
                     .collect(Collectors.toList());
         }
         return list;

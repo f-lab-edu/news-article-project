@@ -20,4 +20,6 @@ public interface ArticleRepository {
     Article save(Article article);
 
     void deleteById(Long id);
+
+    void clear();
 }

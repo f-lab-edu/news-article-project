@@ -11,6 +11,7 @@ public class ArticleSearchRequestDTO {
 
     private ArticleCategory category;
     private ArticleSentiment sentiment;
+    private Long journalistId;
 
     private int page = 1;
     private int size = 10;
