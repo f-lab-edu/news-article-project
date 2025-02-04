@@ -12,7 +12,9 @@ public class Article {
     private ArticleCategory category;
     private ArticleSentiment sentiment;
     private Long views;
-    private LocalDateTime dateTime;
+    private Long journalistId;
+    private String topic;
+    private LocalDateTime updatedAt;
     private Long likes;
     private Long dislikes;
 }
