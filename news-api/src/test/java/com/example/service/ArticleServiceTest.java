@@ -8,6 +8,7 @@ import com.example.dto.ArticleSearchRequestDTO;
 import com.example.repository.ArticleRepository;
 import com.example.repository.MemoryArticleRepository;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,16 +46,33 @@ class ArticleServiceTest {
         article2.setLikes(1000L);
         article2.setDislikes(0L);
 
+        Article article3 = new Article();
+        article3.setTitle("인공지능의 위험");
+        article3.setCategory(ArticleCategory.IT);
+        article3.setSentiment(ArticleSentiment.NEGATIVE);
+        article3.setViews(500L);
+        article3.setJournalistId(2L);
+        article3.setTopic("인공지능");
+        article3.setUpdatedAt(LocalDateTime.of(2024, 12, 15, 8, 0));
+        article3.setLikes(500L);
+        article3.setDislikes(0L);
+
         articleRepository = new MemoryArticleRepository();
         articleService = new ArticleService(articleRepository);
 
         articleRepository.save(article1);
         articleRepository.save(article2);
+        articleRepository.save(article3);
+    }
+
+    @AfterEach
+    void clearRepository() {
+        articleRepository.clear();
     }
 
     // 카테고리 & 논조 없이 기사 찾기
     @Test
-    void searchArticles() {
+    void searchAllArticles() {
         //given
         ArticleSearchRequestDTO requestDTO = new ArticleSearchRequestDTO();
 
@@ -62,11 +80,30 @@ class ArticleServiceTest {
         ArticleResponseDTO articleResponseDTO = articleService.searchArticles(requestDTO);
 
         //then
-        assertThat(articleResponseDTO.getTotalElements()).isEqualTo(2);
+        assertThat(articleResponseDTO.getTotalElements()).isEqualTo(3);
         assertThat(articleResponseDTO.getArticles().get(0).getTitle()).isEqualTo("김연아 금매달");
         assertThat(articleResponseDTO.getArticles().get(1).getTitle()).isEqualTo("손흥민 해트트릭");
+        assertThat(articleResponseDTO.getArticles().get(2).getTitle()).isEqualTo("인공지능의 위험");
     }
 
+    // 기자별 기사 찾기
+    @Test
+    void searchArticlesByJournalist() {
+        //given
+        ArticleSearchRequestDTO requestDTO1 = new ArticleSearchRequestDTO();
+        ArticleSearchRequestDTO requestDTO2 = new ArticleSearchRequestDTO();
+
+        requestDTO1.setJournalistId(1L);
+        requestDTO2.setJournalistId(2L);
+
+        //when
+        ArticleResponseDTO articleResponseDTO1 = articleService.searchArticles(requestDTO1);
+        ArticleResponseDTO articleResponseDTO2 = articleService.searchArticles(requestDTO2);
+
+        //then
+        assertThat(articleResponseDTO1.getTotalElements()).isEqualTo(1);
+        assertThat(articleResponseDTO2.getTotalElements()).isEqualTo(2);
+    }
 
     // 카테고리별 기사 찾기
     @Test
@@ -87,7 +124,7 @@ class ArticleServiceTest {
         assertThat(articleResponseDTO1.getArticles().get(0).getTitle()).isEqualTo("김연아 금매달");
         assertThat(articleResponseDTO1.getArticles().get(1).getTitle()).isEqualTo("손흥민 해트트릭");
 
-        assertThat(articleResponseDTO2.getTotalElements()).isEqualTo(0);
+        assertThat(articleResponseDTO2.getTotalElements()).isEqualTo(1);
     }
 
     // 논조 별 기사 탐색

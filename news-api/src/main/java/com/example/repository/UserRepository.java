@@ -1,2 +1,4 @@
-package com.example.repository;public interface UserRepository {
+package com.example.repository;
+
+public interface UserRepository {
 }
