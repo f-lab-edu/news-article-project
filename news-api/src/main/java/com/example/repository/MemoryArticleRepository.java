@@ -38,4 +38,9 @@ public class MemoryArticleRepository implements ArticleRepository {
     public void deleteById(Long id) {
         store.remove(id);
     }
+
+    @Override
+    public void clear() {
+        store.clear();
+    }
 }
