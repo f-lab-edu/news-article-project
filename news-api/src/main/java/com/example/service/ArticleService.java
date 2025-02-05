@@ -46,7 +46,7 @@ public class ArticleService {
         ArticleSentiment sentiment = article.getSentiment();
 
         if (sentiment == ArticleSentiment.NEUTRAL) {
-            return null;
+            return Collections.emptyList();
         }
 
         List<Article> collect = all.stream().filter(a -> Objects.equals(a.getTopic(), topic))

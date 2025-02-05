@@ -43,4 +43,8 @@ public class MemoryArticleRepository implements ArticleRepository {
     public void clear() {
         store.clear();
     }
+
+    public void resetSequence() {
+        sequence = 0L;
+    }
 }
