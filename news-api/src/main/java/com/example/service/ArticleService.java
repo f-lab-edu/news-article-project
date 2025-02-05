@@ -2,17 +2,16 @@ package com.example.service;
 
 import com.example.domain.Article;
 import com.example.domain.ArticleCategory;
+import com.example.domain.ArticleFeedbackType;
 import com.example.domain.ArticleSentiment;
+import com.example.dto.ArticleFeedbackResponseDTO;
 import com.example.dto.ArticleResponseDTO;
 import com.example.dto.ArticleSearchRequestDTO;
 import com.example.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,6 +19,52 @@ import java.util.stream.Collectors;
 public class ArticleService {
 
     private final ArticleRepository articleRepository;
+
+    public ArticleFeedbackResponseDTO doFeedback(Long articleId, ArticleFeedbackType type) {
+        Optional<Article> target = articleRepository.findById(articleId);
+        if (target.isEmpty()) {
+            return ArticleFeedbackResponseDTO.builder().message("Feedback failed").build();
+        }
+        Article targetArticle = target.get();
+        if (type == ArticleFeedbackType.DISLIKE) {
+            targetArticle.setDislikes(targetArticle.getDislikes() + 1);
+        } else {
+            targetArticle.setLikes(targetArticle.getLikes() + 1);
+        }
+        return ArticleFeedbackResponseDTO.builder()
+                .message("Feedback submitted successfully.")
+                .likes(targetArticle.getLikes())
+                .dislikes(targetArticle.getDislikes())
+                .build();
+    }
+
+    // 특정 기사id를 가지는 기사의 topic과 같지만 반대 논조의 기사들 return
+    public List<Article> getOpposingArticles(Long articleId) {
+        List<Article> all = articleRepository.findAll();
+        Article article = articleRepository.findById(articleId).get();
+        String topic = article.getTopic();
+        ArticleSentiment sentiment = article.getSentiment();
+
+        if (sentiment == ArticleSentiment.NEUTRAL) {
+            return null;
+        }
+
+        List<Article> collect = all.stream().filter(a -> Objects.equals(a.getTopic(), topic))
+                .collect(Collectors.toList());
+
+        if (sentiment == ArticleSentiment.NEGATIVE) {
+            return collect.stream().filter(a -> a.getSentiment() == ArticleSentiment.POSITIVE)
+                    .collect(Collectors.toList());
+        }
+
+        return collect.stream().filter(a -> a.getSentiment() == ArticleSentiment.NEGATIVE)
+                .collect(Collectors.toList());
+    }
+
+    // 특정 기사id를 가지는 기사 return
+    public Article getSpecificArticle(Long articleId) {
+        return articleRepository.findById(articleId).get();
+    }
 
     // 검색/필터 + 정렬 + 페이징
     public ArticleResponseDTO searchArticles(ArticleSearchRequestDTO requestDTO) {

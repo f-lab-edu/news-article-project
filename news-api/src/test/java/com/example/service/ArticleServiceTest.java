@@ -2,7 +2,9 @@ package com.example.service;
 
 import com.example.domain.Article;
 import com.example.domain.ArticleCategory;
+import com.example.domain.ArticleFeedbackType;
 import com.example.domain.ArticleSentiment;
+import com.example.dto.ArticleFeedbackRequestDTO;
 import com.example.dto.ArticleResponseDTO;
 import com.example.dto.ArticleSearchRequestDTO;
 import com.example.repository.ArticleRepository;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -68,6 +71,23 @@ class ArticleServiceTest {
     @AfterEach
     void clearRepository() {
         articleRepository.clear();
+    }
+
+    // 기사 좋아요 & 싫어요 테스트
+    @Test
+    void doFeedback() {
+        ArticleFeedbackType type1 = ArticleFeedbackType.LIKE;
+        ArticleFeedbackType type2 = ArticleFeedbackType.DISLIKE;
+        Long like1 = articleRepository.findById(1L).get().getLikes();
+        Long dislike2 = articleRepository.findById(2L).get().getDislikes();
+
+        articleService.doFeedback(1L, type1);
+        articleService.doFeedback(2L, type2);
+
+        Article first = articleRepository.findById(1L).get();
+        Article second = articleRepository.findById(2L).get();
+        assertThat(first.getLikes() == like1 + 1);
+        assertThat(second.getDislikes() == dislike2 + 1);
     }
 
     // 카테고리 & 논조 없이 기사 찾기
