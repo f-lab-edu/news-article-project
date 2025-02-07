@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ArticleServiceTest {
 
-    ArticleRepository articleRepository;
+    MemoryArticleRepository articleRepository;
     ArticleService articleService;
 
     @BeforeEach
@@ -71,6 +71,7 @@ class ArticleServiceTest {
     @AfterEach
     void clearRepository() {
         articleRepository.clear();
+        articleRepository.resetSequence();
     }
 
     // 기사 좋아요 & 싫어요 테스트
