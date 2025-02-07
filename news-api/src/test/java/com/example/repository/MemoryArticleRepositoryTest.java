@@ -18,6 +18,7 @@ class MemoryArticleRepositoryTest {
     @AfterEach
     void clear() {
         repository.clear();
+        repository.resetSequence();
     }
 
     @Test
@@ -87,4 +88,5 @@ class MemoryArticleRepositoryTest {
 
         assertThat(all.size()).isEqualTo(1);
     }
+
 }
