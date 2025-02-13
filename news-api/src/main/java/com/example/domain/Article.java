@@ -11,6 +11,7 @@ public class Article {
     private String title;
     private ArticleCategory category;
     private ArticleSentiment sentiment;
+    private String content;
     private Long views;
     private Long journalistId;
     private String topic;
