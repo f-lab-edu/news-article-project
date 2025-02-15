@@ -1,6 +1,7 @@
-package com.example.repository;
+package com.example.repository.memory;
 
 import com.example.domain.Article;
+import com.example.repository.ArticleRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
