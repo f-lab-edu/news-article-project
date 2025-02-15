@@ -8,5 +8,5 @@ public enum ArticleCategory {
     LIFE,
     IT,
     SCIENCE,
-    WORLD
+    WORLD,
 }
