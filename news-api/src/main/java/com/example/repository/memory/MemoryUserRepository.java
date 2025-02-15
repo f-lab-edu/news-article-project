@@ -1,7 +1,8 @@
-package com.example.repository;
+package com.example.repository.memory;
 
 import com.example.domain.User;
-import com.example.dto.UserDTO;
+import com.example.dto.UserRequestDTO;
+import com.example.repository.UserRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
@@ -27,12 +28,14 @@ public class MemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public void updateUserInfo(Long id, UserDTO dto) {
+    public void updateUserInfo(Long id, UserRequestDTO dto) throws Exception{
         User user = findById(id).get();
         if (user != null) {
             user.setEmail(dto.getEmail());
             user.setUsername(dto.getUsername());
             user.setPassword(dto.getPassword());
+        } else {
+            throw new Exception();
         }
     }
 
@@ -48,6 +51,17 @@ public class MemoryUserRepository implements UserRepository {
 
     public void resetSequence() {
         sequence = 0L;
+    }
+
+    public boolean isValid(UserRequestDTO dto) {
+        long count = store.values().stream().filter(a -> {
+            return (a.getEmail().equals(dto.getEmail()) || a.getUsername().equals(dto.getUsername()));
+        }).count();
+
+        if (count == 0) {
+            return true;
+        }
+        return false;
     }
 
 }
