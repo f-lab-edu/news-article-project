@@ -28,6 +28,9 @@
             <if test="journalistId != null">
                 and journalist_id = #{journalistId}
             </if>
+            <if test="topic != null and topic != ''">
+                and topic = #{topic}
+            </if>
         </where>
     </select>
 
@@ -44,4 +47,13 @@
         delete from articles
     </delete>
 
+    <update id="updateLikes">
+        update articles set likes = likes+1
+        where id=#{id}
+    </update>
+
+    <update id="updateDislikes">
+        update articles set dislikes = dislikes+1
+        where id=#{id}
+    </update>
 </mapper>
