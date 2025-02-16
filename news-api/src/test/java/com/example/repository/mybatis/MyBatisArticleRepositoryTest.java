@@ -95,19 +95,22 @@ class MyBatisArticleRepositoryTest {
     @Test
     void findArticles() {
         // 모든 기사 검색
-        test(null, null, null, article1, article2, article3, article4);
+        test(null, null, null, null, article1, article2, article3, article4);
 
         // category 별 검색
-        test(ArticleCategory.IT, null, null, article3, article4);
+        test(ArticleCategory.IT, null, null, null, article3, article4);
 
         // sentiment 별 검색
-        test(null, null, ArticleSentiment.POSITIVE, article1, article2, article4);
+        test(null, null, ArticleSentiment.POSITIVE, null, article1, article2, article4);
 
         // journalistId 별 검색
-        test(null, 1L, null, article1);
+        test(null, 1L, null, null, article1);
 
         // category + sentiment 검색
-        test(ArticleCategory.IT, null, ArticleSentiment.POSITIVE, article4);
+        test(ArticleCategory.IT, null, ArticleSentiment.POSITIVE, null, article4);
+
+        // sentiment+topic 검색
+        test(null, null, ArticleSentiment.POSITIVE, "인공지능", article4);
     }
 
     @Test
@@ -132,11 +135,12 @@ class MyBatisArticleRepositoryTest {
         assertThat(originalSize).isEqualTo(nextSize + 1);
     }
 
-    void test(ArticleCategory category, Long journalistId, ArticleSentiment sentiment, Article... articles) {
+    void test(ArticleCategory category, Long journalistId, ArticleSentiment sentiment, String topic, Article... articles) {
         ArticleSearchRequestDTO requestDTO = new ArticleSearchRequestDTO();
         requestDTO.setSentiment(sentiment);
         requestDTO.setCategory(category);
         requestDTO.setJournalistId(journalistId);
+        requestDTO.setTopic(topic);
 
         List<Article> result = articleRepository.findAll(requestDTO);
         assertThat(result).containsExactly(articles);

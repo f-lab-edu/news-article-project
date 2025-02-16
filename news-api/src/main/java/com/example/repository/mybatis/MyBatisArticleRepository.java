@@ -1,6 +1,7 @@
 package com.example.repository.mybatis;
 
 import com.example.domain.Article;
+import com.example.domain.ArticleFeedbackType;
 import com.example.dto.ArticleSearchRequestDTO;
 import com.example.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,14 @@ public class MyBatisArticleRepository implements ArticleRepository {
     @Override
     public void deleteById(Long id) {
         articleMapper.deleteById(id);
+    }
+
+    public void doFeedback(Long articleId, ArticleFeedbackType articleFeedbackType) {
+        if (articleFeedbackType == ArticleFeedbackType.LIKE) {
+            articleMapper.updateLikes(articleId);
+        } else {
+            articleMapper.updateDislikes(articleId);
+        }
     }
 
 }

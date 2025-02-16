@@ -1,8 +1,10 @@
 package com.example.repository.mybatis;
 
 import com.example.domain.Article;
+import com.example.domain.ArticleFeedbackType;
 import com.example.dto.ArticleSearchRequestDTO;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,5 +21,8 @@ public interface ArticleMapper {
 
     void deleteById(Long id);
 
-    void clear();
+    void updateLikes(Long id);
+
+    void updateDislikes(Long id);
+
 }

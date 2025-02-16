@@ -8,8 +8,10 @@ import com.example.dto.ArticleFeedbackResponseDTO;
 import com.example.dto.ArticleResponseDTO;
 import com.example.dto.ArticleSearchRequestDTO;
 import com.example.repository.ArticleRepository;
+import com.example.repository.mybatis.MyBatisArticleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,30 +20,26 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ArticleService {
 
-    private final ArticleRepository articleRepository;
+    private final MyBatisArticleRepository articleRepository;
 
+    @Transactional
     public ArticleFeedbackResponseDTO doFeedback(Long articleId, ArticleFeedbackType type) {
-        Optional<Article> target = articleRepository.findById(articleId);
-        if (target.isEmpty()) {
-            return ArticleFeedbackResponseDTO.builder().message("Feedback failed").build();
-        }
-        Article targetArticle = target.get();
-        if (type == ArticleFeedbackType.DISLIKE) {
-            targetArticle.setDislikes(targetArticle.getDislikes() + 1);
-        } else {
-            targetArticle.setLikes(targetArticle.getLikes() + 1);
-        }
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 기사가 존재하지 않습니다."));
+
+        articleRepository.doFeedback(articleId, type);
+
         return ArticleFeedbackResponseDTO.builder()
                 .message("Feedback submitted successfully.")
-                .likes(targetArticle.getLikes())
-                .dislikes(targetArticle.getDislikes())
+                .likes(article.getLikes() + (type == ArticleFeedbackType.LIKE ? 1 : 0))
+                .dislikes(article.getDislikes() + (type == ArticleFeedbackType.DISLIKE ? 1 : 0))
                 .build();
     }
 
     // 특정 기사id를 가지는 기사의 topic과 같지만 반대 논조의 기사들 return
     public List<Article> getOpposingArticles(Long articleId) {
-        List<Article> all = articleRepository.findAll();
-        Article article = articleRepository.findById(articleId).get();
+        Article article = articleRepository.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 기사가 존재하지 않습니다."));
         String topic = article.getTopic();
         ArticleSentiment sentiment = article.getSentiment();
 
@@ -49,35 +47,34 @@ public class ArticleService {
             return Collections.emptyList();
         }
 
-        List<Article> collect = all.stream().filter(a -> Objects.equals(a.getTopic(), topic))
-                .collect(Collectors.toList());
+        ArticleSearchRequestDTO requestDTO = new ArticleSearchRequestDTO();
+        requestDTO.setTopic(topic);
 
         if (sentiment == ArticleSentiment.NEGATIVE) {
-            return collect.stream().filter(a -> a.getSentiment() == ArticleSentiment.POSITIVE)
-                    .collect(Collectors.toList());
+            requestDTO.setSentiment(ArticleSentiment.POSITIVE);
+        } else {
+            requestDTO.setSentiment(ArticleSentiment.NEGATIVE);
         }
 
-        return collect.stream().filter(a -> a.getSentiment() == ArticleSentiment.NEGATIVE)
-                .collect(Collectors.toList());
+        return articleRepository.findAll(requestDTO);
     }
 
     // 특정 기사id를 가지는 기사 return
     public Article getSpecificArticle(Long articleId) {
-        return articleRepository.findById(articleId).get();
+        return articleRepository.findById(articleId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 ID의 기사가 존재하지 않습니다."));
     }
 
     // 검색/필터 + 정렬 + 페이징
     public ArticleResponseDTO searchArticles(ArticleSearchRequestDTO requestDTO) {
-        List<Article> all = articleRepository.findAll();
+        List<Article> searchResult = articleRepository.findAll(requestDTO);
 
-        all = filterArticles(all, requestDTO.getCategory(), requestDTO.getSentiment(), requestDTO.getJournalistId());
-
-        all = sortArticles(all, requestDTO.getSortField(), requestDTO.isDescending());
+        searchResult = sortArticles(searchResult, requestDTO.getSortField(), requestDTO.isDescending());
 
 
-        long totalElements = all.size();
+        long totalElements = searchResult.size();
         int totalPages = (int) Math.ceil((double) totalElements / requestDTO.getSize());
-        List<Article> pageContent = paginate(all, requestDTO.getPage(), requestDTO.getSize());
+        List<Article> pageContent = paginate(searchResult, requestDTO.getPage(), requestDTO.getSize());
 
         return new ArticleResponseDTO(
                 pageContent,
@@ -85,30 +82,6 @@ public class ArticleService {
                 totalElements,
                 requestDTO.getPage()
         );
-    }
-
-    private List<Article> filterArticles(
-            List<Article> list,
-            ArticleCategory category,
-            ArticleSentiment sentiment,
-            Long journalistId
-    ) {
-        if (category != null) {
-            list = list.stream()
-                    .filter(a -> a.getCategory() == category)
-                    .collect(Collectors.toList());
-        }
-        if (sentiment != null) {
-            list = list.stream()
-                    .filter(a -> a.getSentiment() == sentiment)
-                    .collect(Collectors.toList());
-        }
-        if (journalistId != null) {
-            list = list.stream()
-                    .filter(a -> Objects.equals(a.getJournalistId(), journalistId))
-                    .collect(Collectors.toList());
-        }
-        return list;
     }
 
     private List<Article> sortArticles(List<Article> list, String sortField, boolean descending) {
