@@ -3,6 +3,7 @@ package com.example.dto;
 import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleSentiment;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
