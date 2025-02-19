@@ -6,22 +6,17 @@ import com.example.domain.ArticleFeedbackType;
 import com.example.domain.ArticleSentiment;
 import com.example.dto.ArticleFeedbackResponseDTO;
 import com.example.dto.ArticleResponseDTO;
-import com.example.dto.ArticleSearchRequestDTO;
-import com.example.repository.memory.MemoryArticleRepository;
 import com.example.repository.mybatis.MyBatisArticleRepository;
-import org.junit.jupiter.api.AfterEach;
+import com.example.vo.ArticleSearchVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,18 +95,18 @@ class ArticleServiceTest {
     @Test
     void searchAllArticles() {
         //given
-        ArticleSearchRequestDTO requestDTO = new ArticleSearchRequestDTO();
+        ArticleSearchVO searchVO = new ArticleSearchVO();
         ArrayList<Article> articles = new ArrayList<>();
         articles.add(article1);
         articles.add(article2);
         articles.add(article3);
-        when(articleRepository.findAll(eq(requestDTO))).thenReturn(articles);
+        when(articleRepository.findAll(eq(searchVO))).thenReturn(articles);
 
         //when
-        ArticleResponseDTO allArticles = articleService.searchArticles(requestDTO);
+        ArticleResponseDTO allArticles = articleService.searchArticles(searchVO);
 
         //then
-        verify(articleRepository).findAll(requestDTO);
+        verify(articleRepository).findAll(searchVO);
         assertThat(allArticles.getArticles().size()).isEqualTo(3);
     }
 
@@ -121,8 +116,8 @@ class ArticleServiceTest {
         //given
         ArrayList<Article> articles1 = new ArrayList<>();
         ArrayList<Article> articles2 = new ArrayList<>();
-        ArticleSearchRequestDTO requestDTO1 = new ArticleSearchRequestDTO();
-        ArticleSearchRequestDTO requestDTO2 = new ArticleSearchRequestDTO();
+        ArticleSearchVO requestDTO1 = new ArticleSearchVO();
+        ArticleSearchVO requestDTO2 = new ArticleSearchVO();
         requestDTO1.setJournalistId(1L);
         requestDTO2.setJournalistId(2L);
         articles1.add(article1);
@@ -149,8 +144,8 @@ class ArticleServiceTest {
         //given
         ArrayList<Article> articles1 = new ArrayList<>();
         ArrayList<Article> articles2 = new ArrayList<>();
-        ArticleSearchRequestDTO requestDTO1 = new ArticleSearchRequestDTO();
-        ArticleSearchRequestDTO requestDTO2 = new ArticleSearchRequestDTO();
+        ArticleSearchVO requestDTO1 = new ArticleSearchVO();
+        ArticleSearchVO requestDTO2 = new ArticleSearchVO();
         requestDTO1.setJournalistId(1L);
         requestDTO2.setJournalistId(2L);
         articles1.add(article1);
@@ -183,8 +178,8 @@ class ArticleServiceTest {
         //given
         ArrayList<Article> articles1 = new ArrayList<>();
         ArrayList<Article> articles2 = new ArrayList<>();
-        ArticleSearchRequestDTO requestDTO1 = new ArticleSearchRequestDTO();
-        ArticleSearchRequestDTO requestDTO2 = new ArticleSearchRequestDTO();
+        ArticleSearchVO requestDTO1 = new ArticleSearchVO();
+        ArticleSearchVO requestDTO2 = new ArticleSearchVO();
         requestDTO1.setJournalistId(1L);
         requestDTO2.setJournalistId(2L);
         articles1.add(article1);
@@ -219,8 +214,8 @@ class ArticleServiceTest {
         ArrayList<Article> articles1 = new ArrayList<>();
         ArrayList<Article> articles2 = new ArrayList<>();
 
-        ArticleSearchRequestDTO requestDTO1 = new ArticleSearchRequestDTO();
-        ArticleSearchRequestDTO requestDTO2 = new ArticleSearchRequestDTO();
+        ArticleSearchVO requestDTO1 = new ArticleSearchVO();
+        ArticleSearchVO requestDTO2 = new ArticleSearchVO();
 
         requestDTO1.setCategory(ArticleCategory.SPORTS);
         requestDTO2.setCategory(ArticleCategory.IT);
@@ -254,8 +249,8 @@ class ArticleServiceTest {
         ArrayList<Article> articles1 = new ArrayList<>();
         ArrayList<Article> articles2 = new ArrayList<>();
 
-        ArticleSearchRequestDTO requestDTO1 = new ArticleSearchRequestDTO();
-        ArticleSearchRequestDTO requestDTO2 = new ArticleSearchRequestDTO();
+        ArticleSearchVO requestDTO1 = new ArticleSearchVO();
+        ArticleSearchVO requestDTO2 = new ArticleSearchVO();
 
         requestDTO1.setCategory(ArticleCategory.SPORTS);
         requestDTO2.setCategory(ArticleCategory.IT);
@@ -293,8 +288,8 @@ class ArticleServiceTest {
         ArrayList<Article> articles1 = new ArrayList<>();
         ArrayList<Article> articles2 = new ArrayList<>();
 
-        ArticleSearchRequestDTO requestDTO1 = new ArticleSearchRequestDTO();
-        ArticleSearchRequestDTO requestDTO2 = new ArticleSearchRequestDTO();
+        ArticleSearchVO requestDTO1 = new ArticleSearchVO();
+        ArticleSearchVO requestDTO2 = new ArticleSearchVO();
 
         requestDTO1.setCategory(ArticleCategory.SPORTS);
         requestDTO2.setCategory(ArticleCategory.IT);

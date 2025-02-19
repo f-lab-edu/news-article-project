@@ -1,17 +1,12 @@
 package com.example.controller;
 
 import com.example.domain.Article;
-import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleFeedbackType;
-import com.example.domain.ArticleSentiment;
 import com.example.dto.ArticleFeedbackRequestDTO;
 import com.example.dto.ArticleFeedbackResponseDTO;
 import com.example.dto.ArticleResponseDTO;
-import com.example.dto.ArticleSearchRequestDTO;
-import com.example.repository.memory.MemoryArticleRepository;
 import com.example.repository.mybatis.MyBatisArticleRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.vo.ArticleSearchVO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +37,7 @@ class ArticleControllerIntegrationTest {
 
     @Test
     void searchArticles() {
-        System.out.println(articleRepository.findAll(new ArticleSearchRequestDTO()).size());
+        System.out.println(articleRepository.findAll(new ArticleSearchVO()).size());
         String url = "/articles";
 
         ResponseEntity<ArticleResponseDTO> response = restTemplate.getForEntity(url, ArticleResponseDTO.class);

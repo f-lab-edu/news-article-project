@@ -3,9 +3,7 @@ package com.example.repository.mybatis;
 import com.example.domain.Article;
 import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleSentiment;
-import com.example.dto.ArticleSearchRequestDTO;
-import com.example.repository.ArticleRepository;
-import org.junit.jupiter.api.AfterEach;
+import com.example.vo.ArticleSearchVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @Transactional
 @SpringBootTest
@@ -26,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MyBatisArticleRepositoryTest {
 
     @Autowired
-    ArticleRepository articleRepository;
+    MyBatisArticleRepository articleRepository;
 
     Article article1 = new Article();
     Article article2 = new Article();
@@ -139,13 +136,13 @@ class MyBatisArticleRepositoryTest {
     }
 
     void test(ArticleCategory category, Long journalistId, ArticleSentiment sentiment, String topic, Article... articles) {
-        ArticleSearchRequestDTO requestDTO = new ArticleSearchRequestDTO();
-        requestDTO.setSentiment(sentiment);
-        requestDTO.setCategory(category);
-        requestDTO.setJournalistId(journalistId);
-        requestDTO.setTopic(topic);
+        ArticleSearchVO searchVO = new ArticleSearchVO();
+        searchVO.setSentiment(sentiment);
+        searchVO.setCategory(category);
+        searchVO.setJournalistId(journalistId);
+        searchVO.setTopic(topic);
 
-        List<Article> result = articleRepository.findAll(requestDTO);
+        List<Article> result = articleRepository.findAll(searchVO);
         assertThat(result).containsExactly(articles);
     }
 }

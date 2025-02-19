@@ -1,20 +1,18 @@
 package com.example.service;
 
 import com.example.domain.Article;
-import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleFeedbackType;
 import com.example.domain.ArticleSentiment;
 import com.example.dto.ArticleFeedbackResponseDTO;
 import com.example.dto.ArticleResponseDTO;
 import com.example.dto.ArticleSearchRequestDTO;
-import com.example.repository.ArticleRepository;
 import com.example.repository.mybatis.MyBatisArticleRepository;
+import com.example.vo.ArticleSearchVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,16 +45,16 @@ public class ArticleService {
             return Collections.emptyList();
         }
 
-        ArticleSearchRequestDTO requestDTO = new ArticleSearchRequestDTO();
-        requestDTO.setTopic(topic);
+        ArticleSearchVO searchVO = new ArticleSearchVO();
+        searchVO.setTopic(topic);
 
         if (sentiment == ArticleSentiment.NEGATIVE) {
-            requestDTO.setSentiment(ArticleSentiment.POSITIVE);
+            searchVO.setSentiment(ArticleSentiment.POSITIVE);
         } else {
-            requestDTO.setSentiment(ArticleSentiment.NEGATIVE);
+            searchVO.setSentiment(ArticleSentiment.NEGATIVE);
         }
 
-        return articleRepository.findAll(requestDTO);
+        return articleRepository.findAll(searchVO);
     }
 
     // 특정 기사id를 가지는 기사 return
@@ -66,58 +64,19 @@ public class ArticleService {
     }
 
     // 검색/필터 + 정렬 + 페이징
-    public ArticleResponseDTO searchArticles(ArticleSearchRequestDTO requestDTO) {
-        List<Article> searchResult = articleRepository.findAll(requestDTO);
-
-        searchResult = sortArticles(searchResult, requestDTO.getSortField(), requestDTO.isDescending());
-
+    public ArticleResponseDTO searchArticles(ArticleSearchVO searchVO) {
+        List<Article> searchResult = articleRepository.findAll(searchVO);
 
         long totalElements = searchResult.size();
-        int totalPages = (int) Math.ceil((double) totalElements / requestDTO.getSize());
-        List<Article> pageContent = paginate(searchResult, requestDTO.getPage(), requestDTO.getSize());
+        int totalPages = (int) Math.ceil((double) totalElements / searchVO.getSize());
+        List<Article> pageContent = paginate(searchResult, searchVO.getPage(), searchVO.getSize());
 
         return new ArticleResponseDTO(
                 pageContent,
                 totalPages,
                 totalElements,
-                requestDTO.getPage()
+                searchVO.getPage()
         );
-    }
-
-    private List<Article> sortArticles(List<Article> list, String sortField, boolean descending) {
-        Comparator<Article> comparator = null;
-        switch(sortField) {
-            case "views":
-                comparator = (o1, o2) -> {
-                    if (o1.getViews() < o2.getViews()) {
-                        return -1;
-                    } else if (o1.getViews() > o2.getViews()) {
-                        return 1;
-                    }
-                    return 0;
-                };
-                break;
-            case "date":
-                comparator = (o1, o2) -> o1.getUpdatedAt().compareTo(o2.getUpdatedAt());
-                break;
-            case "id":
-                comparator = (o1, o2) -> {
-                    if (o1.getId() < o2.getId()) {
-                        return 1;
-                    } else if (o1.getId() > o2.getId()) {
-                        return -1;
-                    }
-                    return 0;
-                };
-                break;
-            default:
-                break;
-        }
-        if (descending) {
-            comparator = comparator.reversed();
-        }
-        list.sort(comparator);
-        return list;
     }
 
     private List<Article> paginate(List<Article> list, int page, int size) {
