@@ -32,6 +32,23 @@
                 and topic = #{topic}
             </if>
         </where>
+        <if test="sortField != null">
+            order by
+            <choose>
+                <when test="sortField == 'views'">
+                    views desc
+                </when>
+                <when test="sortField == 'id'">
+                    id asc
+                </when>
+                <when test="sortField == 'date'">
+                    updated_at desc
+                </when>
+                <otherwise>
+                    id asc
+                </otherwise>
+            </choose>
+        </if>
     </select>
 
     <insert id="save" useGeneratedKeys="true" keyProperty="id">

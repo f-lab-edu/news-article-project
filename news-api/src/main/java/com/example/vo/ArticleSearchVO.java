@@ -1,15 +1,13 @@
-package com.example.dto;
+package com.example.vo;
 
 import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleSentiment;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ArticleSearchRequestDTO {
-
+public class ArticleSearchVO {
     private ArticleCategory category;
     private ArticleSentiment sentiment;
     private Long journalistId;

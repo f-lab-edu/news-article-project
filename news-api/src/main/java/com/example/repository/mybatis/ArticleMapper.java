@@ -3,6 +3,7 @@ package com.example.repository.mybatis;
 import com.example.domain.Article;
 import com.example.domain.ArticleFeedbackType;
 import com.example.dto.ArticleSearchRequestDTO;
+import com.example.vo.ArticleSearchVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,7 +16,7 @@ public interface ArticleMapper {
 
     Optional<Article> findByTitle(String name);
 
-    List<Article> findAll(ArticleSearchRequestDTO articleSearch);
+    List<Article> findAll(ArticleSearchVO articleSearch);
 
     void save(Article article);
 
