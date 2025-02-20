@@ -2,7 +2,7 @@ package com.example.repository;
 
 
 import com.example.domain.User;
-import com.example.dto.UserDTO;
+import com.example.dto.UserRequestDTO;
 
 import java.util.Optional;
 
@@ -12,7 +12,7 @@ public interface UserRepository {
 
     User save(User user);
 
-    void updateUserInfo(Long id, UserDTO dto);
+    void updateUserInfo(Long id, UserRequestDTO dto);
 
     void deleteById(Long id);
 
