@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.repository.mybatis.UserMapper">
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="id">
+        insert into users (email,username,password,mail_cycle)
+        values (#{email}, #{username}, #{password}, #{mailCycle})
+    </insert>
+
+    <select id="findById" resultType="com.example.domain.User">
+        select id, email, username, password, mail_cycle
+        from users
+        where id = #{userId}
+    </select>
+
+    <update id="updateUser">
+        update users
+        set
+            username = #{username},
+            password = #{password},
+            mail_cycle = #{mailCycle}
+        where id= #{id}
+    </update>
+
+    <delete id="deleteUser">
+        delete from users
+        where id = #{userId}
+    </delete>
+
+    <delete id="deleteSubscription">
+        delete from user_subscriptions
+        where user_id = #{userId}
+        <if test="category != null">
+            and category = #{category}
+        </if>
+        <if test="topic != null and topic != ''">
+            and topic = #{topic}
+        </if>
+    </delete>
+
+    <insert id="insertSubscription" useGeneratedKeys="true" keyProperty="id">
+        insert into user_subscriptions (user_id, category, topic)
+        values (#{userId}, #{category}, #{topic})
+    </insert>
+
+    <select id="findSubscriptionByUserId" resultType="com.example.domain.UserSubscription">
+        select id, user_id, category, topic
+        from user_subscriptions
+        where user_id = #{userId}
+    </select>
+
+    <select id="findOne" resultType="com.example.domain.UserSubscription">
+        select id, user_id, category, topic
+        from user_subscriptions
+        where user_id = #{userId}
+        <if test="category != null">
+            and category = #{category}
+        </if>
+        <if test="topic != null and topic != ''">
+            and topic = #{topic}
+        </if>
+    </select>
+
+
+</mapper>
