@@ -27,7 +27,6 @@
         select sum(likes) as totalLikes, sum(dislikes) as totalDislikes
         from articles
         where journalist_id = #{journalistId}
-        group by journalist_id
     </select>
 
     <update id="updateReputation">
