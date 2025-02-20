@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.repository.mybatis.JournalistMapper">
+
+    <select id="findById" resultType="Journalist">
+        select id, name, reputation_score
+        from Journalists
+        where id = #{id}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id">
+        insert into journalists (name, reputation_score)
+        values (#{name}, #{reputationScore})
+    </insert>
+
+    <delete id="deleteById">
+        delete from journalists where id = #{id}
+    </delete>
+
+    <select id="findAllJournalistIds" resultType="Long">
+        select id
+        from journalists
+    </select>
+
+    <select id="getLikesDislikes" resultType="com.example.vo.JournalistLikesDislikesVO">
+        select sum(likes) as totalLikes, sum(dislikes) as totalDislikes
+        from articles
+        where journalist_id = #{journalistId}
+        group by journalist_id
+    </select>
+
+    <update id="updateReputation">
+        update journalists
+        set reputation_score = #{reputationScore}
+        where id = #{journalistId}
+    </update>
+
+</mapper>
