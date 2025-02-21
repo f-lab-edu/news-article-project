@@ -2,6 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.example.repository.mybatis.UserMapper">
     <insert id="insertUser" useGeneratedKeys="true" keyProperty="id">
         insert into users (email,username,password,mail_cycle)
@@ -20,7 +21,7 @@
             username = #{username},
             password = #{password},
             mail_cycle = #{mailCycle}
-        where id= #{id}
+        where id= #{userId}
     </update>
 
     <delete id="deleteUser">
