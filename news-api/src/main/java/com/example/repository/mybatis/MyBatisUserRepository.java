@@ -3,6 +3,7 @@ package com.example.repository.mybatis;
 import com.example.domain.ArticleCategory;
 import com.example.domain.User;
 import com.example.domain.UserSubscription;
+import com.example.dto.UserRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -23,8 +24,8 @@ public class MyBatisUserRepository {
         return Optional.ofNullable(userMapper.findById(userId));
     }
 
-    public void update(User update) {
-        userMapper.updateUser(update);
+    public void update(Long userId, UserRequestDTO update) {
+        userMapper.updateUser(userId, update);
     }
 
     public void delete(Long userId) {
