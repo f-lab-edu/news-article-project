@@ -3,22 +3,20 @@ package com.example.service;
 import com.example.domain.ArticleCategory;
 import com.example.domain.User;
 import com.example.domain.UserSubscription;
-import com.example.dto.UserRequestDTO;
+import com.example.dto.EnrollUserDTO;
+import com.example.dto.UserUpdateDTO;
 import com.example.dto.UserSubscriptionInfoDTO;
 import com.example.repository.mybatis.MyBatisUserRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,10 +30,11 @@ class UserServiceTest {
 
     @Test
     void signup() {
+        EnrollUserDTO dto = new EnrollUserDTO();
         User user = new User();
         when(repository.save(user)).thenReturn(user);
 
-        User result = service.signUp(user);
+        User result = service.signUp(dto);
 
         verify(repository).save(user);
         assertThat(user).isEqualTo(user);
@@ -84,9 +83,9 @@ class UserServiceTest {
     @Test
     void updateUser() {
         Long userId = 1L;
-        UserRequestDTO updateDTO = new UserRequestDTO();
+        UserUpdateDTO updateDTO = new UserUpdateDTO();
         updateDTO.setUsername("Lee");
-        updateDTO.setMail_cycle(10);
+        updateDTO.setMailCycle(10);
         updateDTO.setPassword("1234!");
 
         service.updateUser(userId, updateDTO);

@@ -3,7 +3,7 @@ package com.example.repository.mybatis;
 import com.example.domain.ArticleCategory;
 import com.example.domain.User;
 import com.example.domain.UserSubscription;
-import com.example.dto.UserRequestDTO;
+import com.example.dto.UserUpdateDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,7 +15,11 @@ public interface UserMapper {
 
     User findById(Long userId);
 
-    void updateUser(@Param("userId") Long userId, @Param("userRequestDTO") UserRequestDTO user);
+    Long duplicatedUsername(User user);
+
+    Long duplicatedEmail(User user);
+
+    void updateUser(@Param("userId") Long userId, @Param("userUpdateDTO") UserUpdateDTO user);
 
     void deleteUser(Long userId);
 
