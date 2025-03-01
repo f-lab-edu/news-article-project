@@ -1,6 +1,5 @@
 package com.example.controller;
 
-import com.example.domain.ArticleCategory;
 import com.example.dto.EnrollUserDTO;
 import com.example.dto.UserSubscriptionInfoDTO;
 import com.example.dto.UserSubscriptionRequestDTO;
@@ -11,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
 
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -41,35 +38,18 @@ public class UserController {
     @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @PutMapping("/{userId}/subscription")
     public void userSubscription(@PathVariable Long userId, @RequestBody UserSubscriptionRequestDTO dto) {
-        Map<ArticleCategory, List<String>> subscription = dto.getSubscription();
-
-        for (Map.Entry<ArticleCategory, List<String>> entry : subscription.entrySet()) {
-            ArticleCategory category = entry.getKey();
-            List<String> topics = entry.getValue();
-            for (String topic : topics) {
-                userService.addSubscription(userId, category, topic);
-            }
-        }
+        userService.bulkAddSubscriptions(userId, dto.getSubscription());
     }
 
     @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @GetMapping("/{userId}/subscription")
     public UserSubscriptionInfoDTO getUserSubscriptionInfo(@PathVariable Long userId) {
-//        System.out.println("🔍 컨트롤러 SecurityContext 인증 정보: " + SecurityContextHolder.getContext().getAuthentication());
         return userService.getSubscriptionInfoOfUser(userId);
     }
 
     @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @DeleteMapping("/{userId}/subscription")
     public void deleteUserSubscription(@PathVariable Long userId, @RequestBody UserSubscriptionRequestDTO dto) {
-        Map<ArticleCategory, List<String>> subscription = dto.getSubscription();
-
-        for (Map.Entry<ArticleCategory, List<String>> entry : subscription.entrySet()) {
-            ArticleCategory category = entry.getKey();
-            List<String> topics = entry.getValue();
-            for (String topic : topics) {
-                userService.deleteSubscription(userId, category, topic);
-            }
-        }
+        userService.bulkDeleteSubscriptions(userId, dto.getSubscription());
     }
 }

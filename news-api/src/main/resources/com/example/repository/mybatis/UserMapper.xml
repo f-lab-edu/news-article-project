@@ -13,12 +13,14 @@
         select id
         from users
         where username = #{username}
+        limit 1
     </select>
 
     <select id="duplicatedEmail" resultType="Long">
         select id
         from users
         where email = #{email}
+        limit 1
     </select>
 
     <select id="findById" resultType="com.example.domain.User">
@@ -82,5 +84,20 @@
         </if>
     </select>
 
+    <insert id="bulkInsertSubscriptions" useGeneratedKeys="true" keyProperty="id">
+        insert into user_subscriptions (user_id, category, topic)
+        values
+        <foreach collection="list" item="subscription" separator=",">
+            (#{subscription.userId}, #{subscription.category}, #{subscription.topic})
+        </foreach>
+    </insert>
+
+    <delete id="bulkDeleteSubscriptions">
+        delete from user_subscriptions
+        where (user_id, category, topic) in
+        <foreach item="sub" collection="subscriptions" separator="," open="(" close=")">
+            (#{sub.userId}, #{sub.category}, #{sub.topic})
+        </foreach>
+    </delete>
 
 </mapper>

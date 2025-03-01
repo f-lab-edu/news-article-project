@@ -1,13 +1,28 @@
 package com.example.repository.mybatis;
 
+import com.example.config.JwtRequestFilter;
+import com.example.config.JwtUtil;
 import com.example.domain.Article;
 import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleSentiment;
+import com.example.service.CustomUserDetailsService;
+import com.example.service.UserService;
 import com.example.vo.ArticleSearchVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,14 +37,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MyBatisArticleRepositoryTest {
 
+
     @Autowired
     MyBatisArticleRepository articleRepository;
 
     Article article1 = new Article();
+
     Article article2 = new Article();
     Article article3 = new Article();
     Article article4 = new Article();
-
     @BeforeEach
     void initTest() {
         article1.setTitle("김연아 금매달");
@@ -144,5 +160,36 @@ class MyBatisArticleRepositoryTest {
 
         List<Article> result = articleRepository.findAll(searchVO);
         assertThat(result).containsExactly(articles);
+    }
+
+
+    @TestConfiguration
+    @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
+    public class SecurityConfig {
+
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomUserDetailsService customUserDetailsService, JwtUtil jwtUtil, UserService userService) throws Exception {
+            return http
+                    .csrf(csrf -> csrf.disable())
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers("/{articleId}/feedback", "/{userId}/subscription", "/{userId}/subscription").authenticated()
+                            .anyRequest().permitAll()
+                    )
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .addFilterBefore(new JwtRequestFilter(jwtUtil, customUserDetailsService, userService), UsernamePasswordAuthenticationFilter.class)
+                    .securityContext(securityContext -> securityContext.requireExplicitSave(false))
+                    .requestCache(requestCache -> requestCache.disable())
+                    .build();
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+            return authenticationConfiguration.getAuthenticationManager();
+        }
+
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+            return new BCryptPasswordEncoder();
+        }
     }
 }

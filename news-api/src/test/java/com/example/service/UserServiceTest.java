@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
 
@@ -25,20 +26,40 @@ class UserServiceTest {
     @Mock
     MyBatisUserRepository repository;
 
+    @Mock
+    PasswordEncoder passwordEncoder;
+
     @InjectMocks
     UserService service;
 
     @Test
     void signup() {
         EnrollUserDTO dto = new EnrollUserDTO();
+        dto.setEmail("test@example.com");
+        dto.setUsername("testuser");
+        dto.setPassword("password123");
+
+        String encodedPassword = "encodedPassword";
+
         User user = new User();
-        when(repository.save(user)).thenReturn(user);
+        user.setEmail(dto.getEmail());
+        user.setUsername(dto.getUsername());
+        user.setPassword(encodedPassword);
+
+        when(repository.duplicatedUsername(any())).thenReturn(Optional.empty());
+        when(repository.duplicatedEmail(any())).thenReturn(Optional.empty());
+
+        when(passwordEncoder.encode(dto.getPassword())).thenReturn(encodedPassword);
+
+        when(repository.save(any(User.class))).thenReturn(user);
 
         User result = service.signUp(dto);
 
-        verify(repository).save(user);
-        assertThat(user).isEqualTo(user);
+        verify(repository).save(any(User.class));
+        assertThat(result.getUsername()).isEqualTo(dto.getUsername());
+        assertThat(result.getPassword()).isEqualTo(encodedPassword);
     }
+
 
     @Test
     void getSubscriptionInfoOfUser() {
@@ -88,76 +109,73 @@ class UserServiceTest {
         updateDTO.setMailCycle(10);
         updateDTO.setPassword("1234!");
 
+        User mockUser = new User();
+        mockUser.setId(userId);
+        mockUser.setUsername("OldName");
+        mockUser.setMailCycle(5);
+        mockUser.setPassword("oldPassword");
+
+        when(repository.findById(userId)).thenReturn(Optional.of(mockUser));
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+
+        when(repository.duplicatedUsername(any(User.class))).thenReturn(Optional.empty());
+
         service.updateUser(userId, updateDTO);
 
         verify(repository).update(userId, updateDTO);
     }
 
     @Test
-    void addSubscription_UserNotFound() {
-        Long userId = 999L;
-        when(repository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.addSubscription(userId, ArticleCategory.IT, "AI"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("User not found: 999");
-    }
-
-    @Test
-    void addSubscription_AlreadySubscribed() {
+    void bulkAddSubscriptions() {
         Long userId = 1L;
+        Map<ArticleCategory, List<String>> subscriptionMap;
+        subscriptionMap = new HashMap<>();
+        subscriptionMap.put(ArticleCategory.IT, new ArrayList<String>());
+        subscriptionMap.get(ArticleCategory.IT).add("AI");
+        subscriptionMap.get(ArticleCategory.IT).add("Blockchain");
+        subscriptionMap.put(ArticleCategory.SPORTS, new ArrayList<String>());
+        subscriptionMap.get(ArticleCategory.SPORTS).add("Soccer");
+        when(repository.findSubscriptions(userId)).thenReturn(new ArrayList<UserSubscription>());
 
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("afas@gmail.com");
-        user.setUsername("test");
-        user.setPassword("test");
-        Map<ArticleCategory, List<String>> subscribe = new HashMap<>();
-        subscribe.put(ArticleCategory.IT, new ArrayList<>());
-        subscribe.get(ArticleCategory.IT).add("AI");
-        user.setSubscription(subscribe);
+        service.bulkAddSubscriptions(userId, subscriptionMap);
 
-        when(repository.findById(userId)).thenReturn(Optional.of(user));
-        when(repository.findOneSubscription(1L, ArticleCategory.IT, "AI"))
-                .thenReturn(Optional.of(new UserSubscription()));
+        verify(repository).bulkAddSubscriptions(argThat(subscriptions -> {
+            assertThat(subscriptions).hasSize(3);
 
-        service.addSubscription(userId, ArticleCategory.IT, "AI");
+            assertThat(subscriptions).anyMatch(sub ->
+                    sub.getUserId().equals(userId) && sub.getCategory() == ArticleCategory.IT && sub.getTopic().equals("AI"));
+            assertThat(subscriptions).anyMatch(sub ->
+                    sub.getUserId().equals(userId) && sub.getCategory() == ArticleCategory.IT && sub.getTopic().equals("Blockchain"));
+            assertThat(subscriptions).anyMatch(sub ->
+                    sub.getUserId().equals(userId) && sub.getCategory() == ArticleCategory.SPORTS && sub.getTopic().equals("Soccer"));
 
-        verify(repository, never()).insertSubscription(any());
-        verify(repository, never()).findSubscriptions(userId);
+            return true;
+        }));
     }
 
     @Test
-    void addSubscription_Normal() {
+    void bulkDeleteSubscriptions() {
         Long userId = 1L;
-        when(repository.findById(userId)).thenReturn(Optional.of(new User()));
-        when(repository.findOneSubscription(userId, ArticleCategory.IT, "AI")).thenReturn(Optional.empty());
+        Map<ArticleCategory, List<String>> subscriptionMap;
+        subscriptionMap = new HashMap<>();
+        subscriptionMap.put(ArticleCategory.IT, new ArrayList<String>());
+        subscriptionMap.get(ArticleCategory.IT).add("AI");
+        subscriptionMap.get(ArticleCategory.IT).add("Blockchain");
+        subscriptionMap.put(ArticleCategory.SPORTS, new ArrayList<String>());
+        subscriptionMap.get(ArticleCategory.SPORTS).add("Soccer");
+        List<UserSubscription> existingSubscriptions = new ArrayList<>();
+        existingSubscriptions.add(new UserSubscription(userId, ArticleCategory.IT, "AI"));
+        existingSubscriptions.add(new UserSubscription(userId, ArticleCategory.IT, "Blockchain"));
+        existingSubscriptions.add(new UserSubscription(userId, ArticleCategory.SPORTS, "Soccer"));
+        when(repository.findSubscriptions(userId)).thenReturn(existingSubscriptions);
 
-        service.addSubscription(userId, ArticleCategory.IT, "AI");
+        service.bulkDeleteSubscriptions(userId, subscriptionMap);
 
-        verify(repository).insertSubscription(any(UserSubscription.class));
-        verify(repository).findOneSubscription(userId, ArticleCategory.IT, "AI");
-        verify(repository).findById(userId);
-    }
-
-    @Test
-    void deleteSubscription_UserNotFound() {
-        when(repository.findById(2L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.deleteSubscription(2L, ArticleCategory.IT, "AI"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("User not found: 2");
-    }
-
-    @Test
-    void deleteSubscription_Normal() {
-        Long userId = 1L;
-        when(repository.findById(userId)).thenReturn(Optional.of(new User()));
-
-        service.deleteSubscription(userId, ArticleCategory.IT, "AI");
-
-        verify(repository).deleteSubscription(userId, ArticleCategory.IT, "AI");
-
+        verify(repository).bulkDeleteSubscriptions(argThat(subscriptions ->{
+            assertThat(subscriptions).hasSize(3);
+            assertThat(subscriptions).containsExactlyInAnyOrderElementsOf(existingSubscriptions);
+            return true;
+        }));
     }
 
 }
