@@ -10,21 +10,29 @@ import com.example.dto.UserUpdateDTO;
 import com.example.dto.UserSubscriptionInfoDTO;
 import com.example.repository.mybatis.MyBatisUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+
+import static org.springframework.security.core.userdetails.User.withUsername;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final MyBatisUserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 유저의 이메일과 유저이름은 unique 해야함
+    // 비밀번호 암호화 추가
     public User signUp(EnrollUserDTO enrollUserDTO) {
         User user = new User();
         user.setEmail(enrollUserDTO.getEmail());
         user.setUsername(enrollUserDTO.getUsername());
-        user.setPassword(enrollUserDTO.getPassword());
+        user.setPassword(passwordEncoder.encode(enrollUserDTO.getPassword()));
         if (userRepository.duplicatedUsername(user) != null) {
             throw new DuplicatedUsername("Duplicated username");
         }

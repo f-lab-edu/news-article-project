@@ -27,6 +27,13 @@
         where id = #{userId}
     </select>
 
+    <select id="findByEmail" resultType="com.example.domain.User">
+        select id, email, username, password, mail_cycle
+        from users
+        where email = #{email}
+    </select>
+
+
     <update id="updateUser">
         update users
         set

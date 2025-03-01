@@ -8,7 +8,7 @@ import com.example.dto.UserUpdateDTO;
 import com.example.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.annotations.Delete;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,16 +25,20 @@ public class UserController {
         userService.signUp(enrollUserDTO);
     }
 
+    // 로그인한 사용자만 접근 가능
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/{userId}")
     public void updateUser(@PathVariable Long userId, @RequestBody @Valid UserUpdateDTO userUpdateDTO) {
         userService.updateUser(userId, userUpdateDTO);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{userId}")
     public void deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/{userId}/subscription")
     public void userSubscription(@PathVariable Long userId, @RequestBody UserSubscriptionRequestDTO dto) {
         Map<ArticleCategory, List<String>> subscription = dto.getSubscription();
@@ -48,11 +52,14 @@ public class UserController {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{userId}/subscription")
     public UserSubscriptionInfoDTO getUserSubscriptionInfo(@PathVariable Long userId) {
+//        System.out.println("🔍 컨트롤러 SecurityContext 인증 정보: " + SecurityContextHolder.getContext().getAuthentication());
         return userService.getSubscriptionInfoOfUser(userId);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{userId}/subscription")
     public void deleteUserSubscription(@PathVariable Long userId, @RequestBody UserSubscriptionRequestDTO dto) {
         Map<ArticleCategory, List<String>> subscription = dto.getSubscription();
