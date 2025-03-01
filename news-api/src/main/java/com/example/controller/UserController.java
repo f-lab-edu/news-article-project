@@ -25,20 +25,20 @@ public class UserController {
         userService.signUp(enrollUserDTO);
     }
 
-    // 로그인한 사용자만 접근 가능
-    @PreAuthorize("isAuthenticated()")
+    // 로그인한 사용자만 접근 가능, 자기자신의 것만 수정 가능
+    @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @PutMapping("/{userId}")
     public void updateUser(@PathVariable Long userId, @RequestBody @Valid UserUpdateDTO userUpdateDTO) {
         userService.updateUser(userId, userUpdateDTO);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @DeleteMapping("/{userId}")
     public void deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @PutMapping("/{userId}/subscription")
     public void userSubscription(@PathVariable Long userId, @RequestBody UserSubscriptionRequestDTO dto) {
         Map<ArticleCategory, List<String>> subscription = dto.getSubscription();
@@ -52,14 +52,14 @@ public class UserController {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @GetMapping("/{userId}/subscription")
     public UserSubscriptionInfoDTO getUserSubscriptionInfo(@PathVariable Long userId) {
 //        System.out.println("🔍 컨트롤러 SecurityContext 인증 정보: " + SecurityContextHolder.getContext().getAuthentication());
         return userService.getSubscriptionInfoOfUser(userId);
     }
 
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @DeleteMapping("/{userId}/subscription")
     public void deleteUserSubscription(@PathVariable Long userId, @RequestBody UserSubscriptionRequestDTO dto) {
         Map<ArticleCategory, List<String>> subscription = dto.getSubscription();

@@ -22,19 +22,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomUserDetailsService customUserDetailsService, JwtUtil jwtUtil) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomUserDetailsService customUserDetailsService, JwtUtil jwtUtil, UserService userService) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/{articleId}/feedback" , "/{userId}/subscription" , "/{userId}/subscription").authenticated()
-                                .anyRequest().permitAll()
-//                        .requestMatchers("/users", "/login", "/articles", "/journalist").permitAll()
-//                        .anyRequest().authenticated()
+                        .requestMatchers("/{articleId}/feedback", "/{userId}/subscription", "/{userId}/subscription").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JwtRequestFilter(jwtUtil, customUserDetailsService), UsernamePasswordAuthenticationFilter.class)
-                .securityContext(securityContext->securityContext.requireExplicitSave(false))
-                .requestCache(requestCache->requestCache.disable())
+                .addFilterBefore(new JwtRequestFilter(jwtUtil, customUserDetailsService, userService), UsernamePasswordAuthenticationFilter.class)
+                .securityContext(securityContext -> securityContext.requireExplicitSave(false))
+                .requestCache(requestCache -> requestCache.disable())
                 .build();
     }
 
