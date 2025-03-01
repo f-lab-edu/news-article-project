@@ -20,11 +20,11 @@ public class MyBatisUserRepository {
         return user;
     }
 
-    public Long duplicatedUsername(User user) {
+    public Optional<Long> duplicatedUsername(User user) {
         return userMapper.duplicatedUsername(user);
     }
 
-    public Long duplicatedEmail(User user) {
+    public Optional<Long> duplicatedEmail(User user) {
         return userMapper.duplicatedEmail(user);
     }
 
@@ -58,5 +58,15 @@ public class MyBatisUserRepository {
 
     public Optional<UserSubscription> findOneSubscription(Long userId, ArticleCategory category, String topic) {
         return Optional.ofNullable(userMapper.findOne(userId, category, topic));
+    }
+
+    public void bulkAddSubscriptions(List<UserSubscription> subscriptions) {
+        if (!subscriptions.isEmpty()) {
+            userMapper.bulkInsertSubscriptions(subscriptions);
+        }
+    }
+
+    public void bulkDeleteSubscriptions(List<UserSubscription> subscriptions) {
+        userMapper.bulkDeleteSubscriptions(subscriptions);
     }
 }

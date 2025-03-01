@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mapper
 public interface UserMapper {
@@ -17,9 +18,9 @@ public interface UserMapper {
 
     User findByEmail(String email);
 
-    Long duplicatedUsername(User user);
+    Optional<Long> duplicatedUsername(User user);
 
-    Long duplicatedEmail(User user);
+    Optional<Long> duplicatedEmail(User user);
 
     void updateUser(@Param("userId") Long userId, @Param("userUpdateDTO") UserUpdateDTO user);
 
@@ -34,4 +35,8 @@ public interface UserMapper {
     UserSubscription findOne(@Param("userId") Long userId,
                              @Param("category") ArticleCategory category,
                              @Param("topic") String topic);
+
+    void bulkInsertSubscriptions(List<UserSubscription> subscriptions);
+
+    void bulkDeleteSubscriptions(List<UserSubscription> subscriptions);
 }

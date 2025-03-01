@@ -15,8 +15,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.core.userdetails.User.withUsername;
 
@@ -33,10 +35,10 @@ public class UserService {
         user.setEmail(enrollUserDTO.getEmail());
         user.setUsername(enrollUserDTO.getUsername());
         user.setPassword(passwordEncoder.encode(enrollUserDTO.getPassword()));
-        if (userRepository.duplicatedUsername(user) != null) {
+        if (userRepository.duplicatedUsername(user).orElse(null) != null) {
             throw new DuplicatedUsername("Duplicated username");
         }
-        if (userRepository.duplicatedEmail(user) != null) {
+        if (userRepository.duplicatedEmail(user).orElse(null) != null) {
             throw new DuplicatedEmail("Duplicated email");
         }
         userRepository.save(user);
@@ -48,9 +50,9 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setUsername(update.getUsername());
-        user.setPassword(update.getPassword());
+        user.setPassword(passwordEncoder.encode(update.getPassword()));
         user.setMailCycle(update.getMailCycle());
-        if (userRepository.duplicatedUsername(user) != null) {
+        if (userRepository.duplicatedUsername(user).orElse(null) != null) {
             throw new DuplicatedUsername("Duplicated username");
         }
         userRepository.update(id, update);
@@ -69,30 +71,6 @@ public class UserService {
         return subscriptionInfoDTO;
     }
 
-    public void addSubscription(Long userId, ArticleCategory category, String topic) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-
-        boolean alreadySubscribe = userRepository.findOneSubscription(userId, category, topic).isPresent();
-
-        if (alreadySubscribe) {
-            return;
-        }
-
-        UserSubscription subscription = new UserSubscription();
-        subscription.setUserId(userId);
-        subscription.setCategory(category);
-        subscription.setTopic(topic);
-        userRepository.insertSubscription(subscription);
-    }
-
-    public void deleteSubscription(Long userId, ArticleCategory category, String topic) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-
-        userRepository.deleteSubscription(userId, category, topic);
-    }
-
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
@@ -103,5 +81,43 @@ public class UserService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found by email: " + email));
+    }
+
+    @Transactional
+    public void bulkAddSubscriptions(Long userId, Map<ArticleCategory,List<String>> subscriptionMap) {
+        List<UserSubscription> existingSubscriptions = userRepository.findSubscriptions(userId);
+        Set<String> existingTopics = existingSubscriptions.stream()
+                .map(UserSubscription -> UserSubscription.getTopic())
+                .collect(Collectors.toSet());
+
+        List<UserSubscription> subscriptions = new ArrayList<>();
+        for (Map.Entry<ArticleCategory, List<String>> entry : subscriptionMap.entrySet()) {
+            for (String topic : entry.getValue()) {
+                if (!existingTopics.contains(topic)) {
+                    subscriptions.add(new UserSubscription(userId, entry.getKey(), topic));
+                }
+            }
+        }
+        userRepository.bulkAddSubscriptions(subscriptions);
+    }
+
+    @Transactional
+    public void bulkDeleteSubscriptions(Long userId, Map<ArticleCategory,List<String>> subscriptionMap) {
+        List<UserSubscription> existingSubscriptions = userRepository.findSubscriptions(userId);
+        Set<String> existingTopics = existingSubscriptions.stream()
+                .map(UserSubscription -> UserSubscription.getTopic())
+                .collect(Collectors.toSet());
+
+        List<UserSubscription> subscriptionsToDelete = new ArrayList<>();
+        for (Map.Entry<ArticleCategory, List<String>> entry : subscriptionMap.entrySet()) {
+            for (String topic : entry.getValue()) {
+                if (existingTopics.contains(topic)) {
+                    subscriptionsToDelete.add(new UserSubscription(userId, entry.getKey(), topic));
+                } else {
+                    throw new IllegalArgumentException("해당 구독이 존재하지 않습니다: " + topic);
+                }
+            }
+        }
+        userRepository.bulkDeleteSubscriptions(subscriptionsToDelete);
     }
 }
