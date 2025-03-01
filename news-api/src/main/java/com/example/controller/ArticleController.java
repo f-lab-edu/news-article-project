@@ -10,6 +10,7 @@ import com.example.vo.ArticleSearchVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,6 +45,8 @@ public class ArticleController {
         return articleService.getOpposingArticles(articleId);
     }
 
+
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{articleId}/feedback")
     public ResponseEntity<ArticleFeedbackResponseDTO> feedbackArticle(@PathVariable Long articleId, @RequestBody ArticleFeedbackRequestDTO type) {
 

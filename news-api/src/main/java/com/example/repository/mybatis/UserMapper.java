@@ -15,6 +15,8 @@ public interface UserMapper {
 
     User findById(Long userId);
 
+    User findByEmail(String email);
+
     Long duplicatedUsername(User user);
 
     Long duplicatedEmail(User user);

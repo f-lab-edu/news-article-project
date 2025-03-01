@@ -32,6 +32,10 @@ public class MyBatisUserRepository {
         return Optional.ofNullable(userMapper.findById(userId));
     }
 
+    public Optional<User> findByEmail(String email) {
+        return Optional.ofNullable(userMapper.findByEmail(email));
+    }
+
     public void update(Long userId, UserUpdateDTO update) {
         userMapper.updateUser(userId, update);
     }
