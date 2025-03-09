@@ -2,6 +2,7 @@ package com.example.repository.mybatis;
 
 import com.example.config.JwtRequestFilter;
 import com.example.config.JwtUtil;
+import com.example.config.RedisTestContainerConfig;
 import com.example.domain.Article;
 import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleSentiment;
@@ -23,6 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
 @SpringBootTest
+@ContextConfiguration(initializers = RedisTestContainerConfig.class)
 @Sql(scripts = "/sql/initialize_db.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 
 class MyBatisArticleRepositoryTest {
