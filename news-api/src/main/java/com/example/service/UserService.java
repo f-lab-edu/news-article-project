@@ -13,9 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.springframework.security.core.userdetails.User.withUsername;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +60,7 @@ public class UserService {
 
     @Cacheable(value="userSubscription", key="'users:subscriptionInfo:'+#userId",cacheManager = "cacheManager")
     public UserSubscriptionInfoDTO getSubscriptionInfoOfUser(Long userId) {
-        System.out.println("🟢 DB에서 구독 정보를 가져옵니다 (캐시 적용 전)");
+//        System.out.println("🟢 DB에서 구독 정보를 가져옵니다 (캐시 적용 전)");
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -75,7 +71,7 @@ public class UserService {
         subscriptionInfoDTO.setSubs(subs);
         subscriptionInfoDTO.setMailCycle(mailCycle);
 
-        System.out.println("🟢 Redis에 저장될 데이터: " + subscriptionInfoDTO);
+//        System.out.println("🟢 Redis에 저장될 데이터: " + subscriptionInfoDTO);
 
         // ✅ Redis에 직접 저장
         String cacheKey = "users:subscriptionInfo:" + userId;
