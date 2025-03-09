@@ -10,6 +10,9 @@ import com.example.dto.UserUpdateDTO;
 import com.example.dto.UserSubscriptionInfoDTO;
 import com.example.repository.mybatis.MyBatisUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,6 +30,7 @@ import static org.springframework.security.core.userdetails.User.withUsername;
 public class UserService {
     private final MyBatisUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RedisTemplate redisTemplate;
 
     // 유저의 이메일과 유저이름은 unique 해야함
     // 비밀번호 암호화 추가
@@ -58,7 +62,10 @@ public class UserService {
         userRepository.update(id, update);
     }
 
+    @Cacheable(value="userSubscription", key="'users:subscriptionInfo:'+#userId",cacheManager = "cacheManager")
     public UserSubscriptionInfoDTO getSubscriptionInfoOfUser(Long userId) {
+        System.out.println("🟢 DB에서 구독 정보를 가져옵니다 (캐시 적용 전)");
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         List<UserSubscription> subs = userRepository.findSubscriptions(userId);
@@ -67,6 +74,12 @@ public class UserService {
         UserSubscriptionInfoDTO subscriptionInfoDTO = new UserSubscriptionInfoDTO();
         subscriptionInfoDTO.setSubs(subs);
         subscriptionInfoDTO.setMailCycle(mailCycle);
+
+        System.out.println("🟢 Redis에 저장될 데이터: " + subscriptionInfoDTO);
+
+        // ✅ Redis에 직접 저장
+        String cacheKey = "users:subscriptionInfo:" + userId;
+        redisTemplate.opsForValue().set(cacheKey, subscriptionInfoDTO);
 
         return subscriptionInfoDTO;
     }
@@ -84,6 +97,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value="userSubscription", key="'users:subscriptionInfo:'+#userId",cacheManager = "cacheManager")
     public void bulkAddSubscriptions(Long userId, Map<ArticleCategory,List<String>> subscriptionMap) {
         List<UserSubscription> existingSubscriptions = userRepository.findSubscriptions(userId);
         Set<String> existingTopics = existingSubscriptions.stream()
@@ -102,6 +116,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value="userSubscription", key="'users:subscriptionInfo:'+#userId",cacheManager = "cacheManager")
     public void bulkDeleteSubscriptions(Long userId, Map<ArticleCategory,List<String>> subscriptionMap) {
         List<UserSubscription> existingSubscriptions = userRepository.findSubscriptions(userId);
         Set<String> existingTopics = existingSubscriptions.stream()
