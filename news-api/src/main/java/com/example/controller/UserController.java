@@ -10,11 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-
 @RequestMapping("/users")
 @RequiredArgsConstructor
 @RestController
 public class UserController {
+
     private final UserService userService;
 
     @PostMapping
@@ -22,7 +22,6 @@ public class UserController {
         userService.signUp(enrollUserDTO);
     }
 
-    // 로그인한 사용자만 접근 가능, 자기자신의 것만 수정 가능
     @PreAuthorize("isAuthenticated() and #userId == authentication.details")
     @PutMapping("/{userId}")
     public void updateUser(@PathVariable Long userId, @RequestBody @Valid UserUpdateDTO userUpdateDTO) {

@@ -1,28 +1,13 @@
 package com.example.repository.mybatis;
 
-import com.example.config.JwtRequestFilter;
-import com.example.config.JwtUtil;
 import com.example.domain.Article;
 import com.example.domain.ArticleCategory;
 import com.example.domain.ArticleSentiment;
-import com.example.service.CustomUserDetailsService;
-import com.example.service.UserService;
 import com.example.vo.ArticleSearchVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,18 +19,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 @SpringBootTest
 @Sql(scripts = "/sql/initialize_db.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-
 class MyBatisArticleRepositoryTest {
-
 
     @Autowired
     MyBatisArticleRepository articleRepository;
 
     Article article1 = new Article();
-
     Article article2 = new Article();
     Article article3 = new Article();
     Article article4 = new Article();
+
     @BeforeEach
     void initTest() {
         article1.setTitle("김연아 금매달");
@@ -97,57 +80,44 @@ class MyBatisArticleRepositoryTest {
     @Test
     void findById() {
         Article result = articleRepository.findById(article1.getId()).get();
-
         assertThat(result).isEqualTo(article1);
     }
 
     @Test
     void findByTitle() {
         Article result = articleRepository.findByTitle("김연아 금매달").get();
-
         assertThat(result).isEqualTo(article1);
     }
 
     @Test
     void findArticles() {
-        // 모든 기사 검색
+        // 전체
         test(null, null, null, null, article1, article2, article3, article4);
-
-        // category 별 검색
+        // 카테고리 검색
         test(ArticleCategory.IT, null, null, null, article3, article4);
-
-        // sentiment 별 검색
+        // 감정 분석
         test(null, null, ArticleSentiment.POSITIVE, null, article1, article2, article4);
-
-        // journalistId 별 검색
+        // 기자별 검색
         test(null, 1L, null, null, article1);
-
-        // category + sentiment 검색
+        // 카테고리+감정
         test(ArticleCategory.IT, null, ArticleSentiment.POSITIVE, null, article4);
-
-        // sentiment+topic 검색
+        // 감정+토픽
         test(null, null, ArticleSentiment.POSITIVE, "인공지능", article4);
     }
 
     @Test
     void save() {
         List<Article> all = articleRepository.findAll(null);
-
-        int size = all.size();
-
-        assertThat(size).isEqualTo(4);
+        assertThat(all.size()).isEqualTo(4);
     }
 
     @Test
     void deleteById() {
         List<Article> all = articleRepository.findAll(null);
         int originalSize = all.size();
-        System.out.println(originalSize);
         articleRepository.deleteById(article1.getId());
         all = articleRepository.findAll(null);
         int nextSize = all.size();
-        System.out.println(nextSize);
-
         assertThat(originalSize).isEqualTo(nextSize + 1);
     }
 
@@ -160,36 +130,5 @@ class MyBatisArticleRepositoryTest {
 
         List<Article> result = articleRepository.findAll(searchVO);
         assertThat(result).containsExactly(articles);
-    }
-
-
-    @TestConfiguration
-    @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
-    public class SecurityConfig {
-
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomUserDetailsService customUserDetailsService, JwtUtil jwtUtil, UserService userService) throws Exception {
-            return http
-                    .csrf(csrf -> csrf.disable())
-                    .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/{articleId}/feedback", "/{userId}/subscription", "/{userId}/subscription").authenticated()
-                            .anyRequest().permitAll()
-                    )
-                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                    .addFilterBefore(new JwtRequestFilter(jwtUtil, customUserDetailsService, userService), UsernamePasswordAuthenticationFilter.class)
-                    .securityContext(securityContext -> securityContext.requireExplicitSave(false))
-                    .requestCache(requestCache -> requestCache.disable())
-                    .build();
-        }
-
-        @Bean
-        public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-            return authenticationConfiguration.getAuthenticationManager();
-        }
-
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-            return new BCryptPasswordEncoder();
-        }
     }
 }
