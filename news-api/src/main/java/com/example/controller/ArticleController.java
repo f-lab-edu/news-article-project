@@ -46,7 +46,7 @@ public class ArticleController {
     }
 
 
-    @PreAuthorize("isAuthenticated() and #userId == authentication.details")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{articleId}/feedback")
     public ResponseEntity<ArticleFeedbackResponseDTO> feedbackArticle(@PathVariable Long articleId, @RequestBody ArticleFeedbackRequestDTO type) {
 
