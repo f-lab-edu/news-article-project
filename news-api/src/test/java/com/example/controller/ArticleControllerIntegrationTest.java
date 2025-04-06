@@ -5,27 +5,32 @@ import com.example.domain.ArticleFeedbackType;
 import com.example.dto.ArticleFeedbackRequestDTO;
 import com.example.dto.ArticleFeedbackResponseDTO;
 import com.example.dto.ArticleResponseDTO;
+import com.example.dto.EnrollUserDTO;
 import com.example.repository.mybatis.MyBatisArticleRepository;
+import com.example.repository.mybatis.MyBatisUserRepository;
 import com.example.vo.ArticleSearchVO;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql(scripts = "/sql/insert_init_data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(scripts = "/sql/init_user_data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+
 
 class ArticleControllerIntegrationTest {
 
@@ -33,7 +38,47 @@ class ArticleControllerIntegrationTest {
     private TestRestTemplate restTemplate;
     @Autowired
     private MyBatisArticleRepository articleRepository;
+    @Autowired
+    private MyBatisUserRepository userRepository;
 
+    private String jwtToken;
+    private Long userId;
+
+
+    @BeforeEach
+    void setup() {
+        // 회원가입
+        String email = "testuser1@example.com";
+        String password = "1234!";
+        String username = "user";
+
+        EnrollUserDTO enrollUserDTO = new EnrollUserDTO();
+        enrollUserDTO.setEmail(email);
+        enrollUserDTO.setPassword(password);
+        enrollUserDTO.setUsername(username);
+
+        HttpEntity<EnrollUserDTO> enrollRequest = new HttpEntity<>(enrollUserDTO);
+        ResponseEntity<Void> enrollResponse = restTemplate.postForEntity("/users", enrollRequest, null);
+
+        assertThat(enrollResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        this.userId = userRepository.findByEmail(email).get().getId();
+        assertThat(this.userId).isNotNull();
+
+        // 로그인
+        Map<String, String> loginRequest = new HashMap<>();
+        loginRequest.put("email", email);
+        loginRequest.put("password", password);
+
+        ResponseEntity<String> loginResponse = restTemplate.postForEntity("/login", loginRequest, String.class);
+        assertThat(loginResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        HttpHeaders headers = loginResponse.getHeaders();
+        assertThat(headers.containsKey(HttpHeaders.SET_COOKIE)).isTrue();
+
+        jwtToken = headers.getFirst(HttpHeaders.SET_COOKIE);
+        System.out.println("JWT 쿠키: " + jwtToken);
+    }
 
     @Test
     void searchArticles() {
@@ -88,12 +133,23 @@ class ArticleControllerIntegrationTest {
     @Test
     void feedbackArticle_success() {
         long id = articleRepository.findByTitle("인공지능의 위험").get().getId();
+
         ArticleFeedbackRequestDTO requestDTO = new ArticleFeedbackRequestDTO();
         requestDTO.setType(ArticleFeedbackType.LIKE);
 
-        ResponseEntity<ArticleFeedbackResponseDTO> response = restTemplate.postForEntity(
+        // 🔥 jwt=... 만 추출해서 쿠키로 사용해야 Tomcat이 인식함
+        String actualJwt = jwtToken.split(";")[0];
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, actualJwt); // 여기서 전체 쿠키 문자열이 아닌, jwt=...만 전달
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<ArticleFeedbackRequestDTO> entity = new HttpEntity<>(requestDTO, headers);
+
+        ResponseEntity<ArticleFeedbackResponseDTO> response = restTemplate.exchange(
                 "/articles/" + id + "/feedback",
-                requestDTO,
+                HttpMethod.POST,
+                entity,
                 ArticleFeedbackResponseDTO.class
         );
 
@@ -106,18 +162,24 @@ class ArticleControllerIntegrationTest {
         assertThat(body.getDislikes()).isEqualTo(0);
     }
 
+
+
     @Test
     void testFeedbackArticle_failed() {
         ArticleFeedbackRequestDTO requestDTO = new ArticleFeedbackRequestDTO();
         requestDTO.setType(ArticleFeedbackType.LIKE);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Cookie", "testToken");
+        HttpEntity<?> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<ArticleFeedbackResponseDTO> response = restTemplate.postForEntity(
+        ResponseEntity<ArticleFeedbackResponseDTO> response = restTemplate.exchange(
                 "/articles/133/feedback",
-                requestDTO,
+                HttpMethod.POST,
+                entity,
                 ArticleFeedbackResponseDTO.class
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
 }
