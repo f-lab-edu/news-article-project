@@ -10,7 +10,6 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 
 public class RedisTestContainerConfig implements BeforeAllCallback, ApplicationContextInitializer<ConfigurableApplicationContext> {
-
     @Container
     private static final GenericContainer<?> redisContainer = new GenericContainer<>("redis:7.2.7")
             .withExposedPorts(6379)

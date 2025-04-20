@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,7 +96,7 @@ public class UserService {
     }
 
     @Transactional
-    @CacheEvict(value="userSubscription", key="'users:subscriptionInfo:'+#userId",cacheManager = "cacheManager")
+    @CacheEvict(value="userSubscription", key="'users:subscriptionInfo:'+#userId", cacheManager = "cacheManager")
     public void bulkAddSubscriptions(Long userId, Map<ArticleCategory,List<String>> subscriptionMap) {
         List<UserSubscription> existingSubscriptions = userRepository.findSubscriptions(userId);
         Set<String> existingTopics = existingSubscriptions.stream()
@@ -112,7 +115,7 @@ public class UserService {
     }
 
     @Transactional
-    @CacheEvict(value="userSubscription", key="'users:subscriptionInfo:'+#userId",cacheManager = "cacheManager")
+    @CacheEvict(value="userSubscription", key="'users:subscriptionInfo:'+#userId", cacheManager = "cacheManager")
     public void bulkDeleteSubscriptions(Long userId, Map<ArticleCategory,List<String>> subscriptionMap) {
         List<UserSubscription> existingSubscriptions = userRepository.findSubscriptions(userId);
         Set<String> existingTopics = existingSubscriptions.stream()
