@@ -5,7 +5,6 @@ import com.example.domain.ArticleFeedbackType;
 import com.example.domain.ArticleSentiment;
 import com.example.dto.ArticleFeedbackResponseDTO;
 import com.example.dto.ArticleResponseDTO;
-import com.example.dto.ArticleSearchRequestDTO;
 import com.example.repository.mybatis.MyBatisArticleRepository;
 import com.example.vo.ArticleSearchVO;
 import lombok.RequiredArgsConstructor;

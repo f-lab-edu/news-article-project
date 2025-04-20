@@ -1,11 +1,8 @@
 package com.example.repository.mybatis;
 
 import com.example.domain.Article;
-import com.example.domain.ArticleFeedbackType;
-import com.example.dto.ArticleSearchRequestDTO;
 import com.example.vo.ArticleSearchVO;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;

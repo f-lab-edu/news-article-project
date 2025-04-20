@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.config.RedisTestContainerConfig;
 import com.example.domain.ArticleCategory;
 import com.example.dto.EnrollUserDTO;
 import com.example.dto.UserSubscriptionInfoDTO;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -24,8 +26,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @Sql(scripts = "/sql/init_user_data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@ContextConfiguration(initializers = RedisTestContainerConfig.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UserControllerTest {
+
     @Autowired
     private TestRestTemplate restTemplate;
     @Autowired
@@ -240,5 +244,12 @@ class UserControllerTest {
         subscriptionRequestDTO.setSubscription(map);
         ResponseEntity<Void> response = restTemplate.exchange(url + "/" + userId + "/" + "subscription", HttpMethod.DELETE, request, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    private HttpHeaders createAuthHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, jwtToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 }

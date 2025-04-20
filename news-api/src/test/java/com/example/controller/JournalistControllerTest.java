@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.config.RedisTestContainerConfig;
 import com.example.dto.JournalistReputationDTO;
 import com.example.repository.mybatis.MyBatisJournalistRepository;
 import org.junit.jupiter.api.Test;
@@ -10,11 +11,13 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
+@ContextConfiguration(initializers = RedisTestContainerConfig.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class JournalistControllerTest {
 
