@@ -1,4 +1,5 @@
 DELETE FROM articles;  -- 기존 데이터 삭제 (필요시)
+delete from users;
 
 INSERT INTO articles (title, category, sentiment, views, journalist_id, topic, updated_at, likes, dislikes) VALUES
 ('김연아 금매달', 'SPORTS', 'POSITIVE', 1500, 1, '김연아', '2010-12-15 08:00:00', 1300, 0),

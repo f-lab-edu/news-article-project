@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.config.RedisTestContainerConfig;
 import com.example.domain.ArticleCategory;
 import com.example.dto.EnrollUserDTO;
 import com.example.dto.UserSubscriptionInfoDTO;
@@ -12,7 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -22,12 +26,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @Sql(scripts = "/sql/init_user_data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@ContextConfiguration(initializers = RedisTestContainerConfig.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UserControllerTest {
+
     @Autowired
     private TestRestTemplate restTemplate;
     @Autowired
     private MyBatisUserRepository repository;
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    @Autowired
+    private CacheManager cacheManager;
 
     private String jwtToken;
     private Long userId;
@@ -62,6 +72,51 @@ class UserControllerTest {
         System.out.println(jwtToken);
     }
 
+    @Test
+    void 구독정보_조회시_캐시_적용되는지_확인() {
+        // 1. 구독정보 변경 (cache 삭제후 db에 구독 정보 update)
+        String url = "/users";
+        UserSubscriptionRequestDTO requestDTO = new UserSubscriptionRequestDTO();
+        HashMap<ArticleCategory, List<String>> map = new HashMap<>();
+        map.put(ArticleCategory.IT, new ArrayList<>());
+        map.get(ArticleCategory.IT).add("AI");
+        requestDTO.setSubscription(map);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, jwtToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<UserSubscriptionRequestDTO> request = new HttpEntity<>(requestDTO, headers);
+        ResponseEntity<Void> response = restTemplate.exchange(url + "/" + userId + "/" + "subscription", HttpMethod.PUT, request, Void.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+
+        // 2. 구독정보 조회 (캐시 저장)
+        request = new HttpEntity<>(headers);
+        ResponseEntity<UserSubscriptionInfoDTO> response2 = restTemplate.exchange("/users" + "/" + userId + "/subscription", HttpMethod.GET, request, UserSubscriptionInfoDTO.class);
+
+        assertThat(response2.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response2.getBody()).isNotNull();
+
+
+        // 3. Redis에서 데이터 조회
+        String cacheKey = "users:subscriptionInfo:" + userId;
+        UserSubscriptionInfoDTO cachedData = (UserSubscriptionInfoDTO) redisTemplate.opsForValue().get(cacheKey);
+
+        // 4. Redis에서 데이터를 가져왔는지 검증
+        assertThat(cachedData).isNotNull();
+        assertThat(cachedData.getSubs()).isNotEmpty();
+        assertThat(cachedData.getSubs().get(0).getTopic()).isEqualTo("AI");
+
+        // 5. GET 요청 실행 (이제 캐시에서 조회해야 함)
+        ResponseEntity<UserSubscriptionInfoDTO> redisData = restTemplate.exchange("/users/" + userId + "/subscription", HttpMethod.GET, request, UserSubscriptionInfoDTO.class);
+
+        // 6. 캐시에서 가져왔는지 확인 (Redis에서 가져온 데이터와 비교)
+        assertThat(redisData.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(redisData.getBody()).isNotNull();
+        assertThat(redisData.getBody().getSubs()).isNotEmpty();
+        assertThat(redisData.getBody()).isEqualTo(cachedData);  // 캐시에서 가져온 데이터와 일치해야 함
+    }
 
     @Test
     void enrollUserDuplicatedUserName() {
@@ -189,5 +244,12 @@ class UserControllerTest {
         subscriptionRequestDTO.setSubscription(map);
         ResponseEntity<Void> response = restTemplate.exchange(url + "/" + userId + "/" + "subscription", HttpMethod.DELETE, request, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    private HttpHeaders createAuthHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, jwtToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 }
